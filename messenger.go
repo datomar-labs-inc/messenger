@@ -102,7 +102,7 @@ func New(mo Options) *Messenger {
 	}
 
 	m.verifyHandler = NewVerifyHandler(mo.VerifyToken)
-	m.mux.HandleFunc(mo.WebhookURL, m.handle)
+	m.mux.HandleFunc(mo.WebhookURL, m.Handle)
 
 	return m
 }
