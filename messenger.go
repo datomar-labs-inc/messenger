@@ -101,7 +101,7 @@ func New(mo Options) *Messenger {
 		mo.WebhookURL = "/"
 	}
 
-	m.verifyHandler = newVerifyHandler(mo.VerifyToken)
+	m.verifyHandler = NewVerifyHandler(mo.VerifyToken)
 	m.mux.HandleFunc(mo.WebhookURL, m.handle)
 
 	return m
@@ -267,7 +267,7 @@ func (m *Messenger) CallToActionsSetting(state string, actions []CallToActionsIt
 }
 
 // handle is the internal HTTP handler for the webhooks.
-func (m *Messenger) handle(w http.ResponseWriter, r *http.Request) {
+func (m *Messenger) Handle(w http.ResponseWriter, r *http.Request) {
 	if r.Method == "GET" {
 		m.verifyHandler(w, r)
 		return
@@ -284,30 +284,30 @@ func (m *Messenger) handle(w http.ResponseWriter, r *http.Request) {
 		err = xerrors.Errorf("could not decode response: %w", err)
 		fmt.Println(err)
 		fmt.Println("could not decode response:", err)
-		respond(w, http.StatusBadRequest)
+		Respond(w, http.StatusBadRequest)
 		return
 	}
 
 	if rec.Object != "page" {
 		fmt.Println("Object is not page, undefined behaviour. Got", rec.Object)
-		respond(w, http.StatusUnprocessableEntity)
+		Respond(w, http.StatusUnprocessableEntity)
 		return
 	}
 
 	if m.verify {
 		if err := m.checkIntegrity(r); err != nil {
 			fmt.Println("could not verify request:", err)
-			respond(w, http.StatusUnauthorized)
+			Respond(w, http.StatusUnauthorized)
 			return
 		}
 	}
 
-	m.dispatch(rec)
+	m.Dispatch(rec)
 
-	respond(w, http.StatusAccepted) // We do not return any meaningful response immediately so it should be 202
+	Respond(w, http.StatusAccepted) // We do not return any meaningful response immediately so it should be 202
 }
 
-func respond(w http.ResponseWriter, code int) {
+func Respond(w http.ResponseWriter, code int) {
 	w.Header().Set("Content-Type", "application/json")
 	fmt.Fprintf(w, `{"code": %d, "status": "%s"}`, code, http.StatusText(code))
 }
@@ -349,7 +349,7 @@ func (m *Messenger) checkIntegrity(r *http.Request) error {
 }
 
 // dispatch triggers all of the relevant handlers when a webhook event is received.
-func (m *Messenger) dispatch(r Receive) {
+func (m *Messenger) Dispatch(r Receive) {
 	for _, entry := range r.Entry {
 		for _, info := range entry.Messaging {
 			a := m.classify(info)
@@ -509,7 +509,7 @@ func (m *Messenger) classify(info MessageInfo) Action {
 }
 
 // newVerifyHandler returns a function which can be used to handle webhook verification
-func newVerifyHandler(token string) func(w http.ResponseWriter, r *http.Request) {
+func NewVerifyHandler(token string) func(w http.ResponseWriter, r *http.Request) {
 	return func(w http.ResponseWriter, r *http.Request) {
 		if r.FormValue("hub.verify_token") == token {
 			fmt.Fprintln(w, r.FormValue("hub.challenge"))
