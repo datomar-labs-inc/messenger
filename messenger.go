@@ -313,7 +313,7 @@ func Respond(w http.ResponseWriter, code int) {
 }
 
 // checkIntegrity checks the integrity of the requests received
-func (m *Messenger) checkIntegrity(r *http.Request) error {
+func (m *Messenger) CheckIntegrity(r *http.Request) error {
 	if m.appSecret == "" {
 		return xerrors.New("missing app secret")
 	}
