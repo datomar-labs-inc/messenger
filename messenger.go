@@ -295,7 +295,7 @@ func (m *Messenger) Handle(w http.ResponseWriter, r *http.Request) {
 	}
 
 	if m.verify {
-		if err := m.checkIntegrity(r); err != nil {
+		if err := m.CheckIntegrity(r); err != nil {
 			fmt.Println("could not verify request:", err)
 			Respond(w, http.StatusUnauthorized)
 			return
